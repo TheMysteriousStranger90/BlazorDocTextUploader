@@ -8,7 +8,7 @@
 
 @if (isSucceed.HasValue)
 {
-    <h3 role="button" class="@(isSucceed.Value ? "text-success" : "text-danger")" @onclick="onSubmit">
+    <h3 role="button" style="color: #9f7aea;" class="@(isSucceed.Value ? "text-success" : "text-danger")" @onclick="onSubmit">
         @if (isSucceed.Value)
         {
             <text>Success! File has been uploaded</text>
@@ -24,14 +24,14 @@ else
     <EditForm Model="fileUploadModel" OnValidSubmit="Upload">
         <div class="form-row mt-3">
             <div class="mb-4">
-                <label class="form-label user-select-none mt-3">Email</label>
-                <InputText @bind-Value="fileUploadModel.Email" class="form-control " placeholder="example@gmail.com"/>
+                <label for="textInput" class="form-label user-select-none mt-3">Email</label>
+                <InputText id="textInput" @bind-Value="fileUploadModel.Email" class="form-control " placeholder="example@gmail.com"/>
                 <ValidationMessage For="@(() => fileUploadModel.Email)"/>
             </div>
             <div class="mb-4 mt-3"></div>
-            <div class="mb-4">
-                <label class="form-label user-select-none mt-3">Document to upload</label>
-                <InputFile @bind-Value="fileUploadModel.Document" accept=".docx" class="form-control"/>
+            <div class="form-group mb-4">
+                <label for="fileInput" class="form-label user-select-none mt-3">Document to upload</label>
+                <InputFile id="fileInput" @bind-Value="fileUploadModel.Document" accept=".docx" class="form-control"/>
                 <ValidationMessage For="@(() => fileUploadModel.Document)"/>
             </div>
         </div>
@@ -74,6 +74,7 @@ else
     private class FileUploadModel
     {
         public string Email { get; set; }
+
         [FileTypeValidation(".doc", ".docx", ErrorMessage = "File type must be .doc or .docx")]
         public IFormFile Document { get; set; }
     }
@@ -87,13 +88,12 @@ else
         if (fileUploadModel.Document != null)
         {
             isUploading = true;
-            
+
             if (string.IsNullOrWhiteSpace(fileUploadModel.Email) || fileUploadModel.Document == null)
             {
                 isUploading = false;
                 return;
             }
-
 
             try
             {
@@ -113,12 +113,21 @@ else
                     else
                     {
                         isSucceed = false;
+                        var errorResponse = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine($"Upload failed with status code: {response.StatusCode}");
+                        Console.WriteLine($"Error response: {errorResponse}");
                     }
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                isSucceed = false;
+                Console.WriteLine($"HTTP request error: {ex.Message}");
             }
             catch (Exception ex)
             {
                 isSucceed = false;
+                Console.WriteLine($"An error occurred: {ex.Message}");
             }
             finally
             {
@@ -127,10 +136,13 @@ else
         }
     }
 
+
     private void onSubmit()
     {
         isSucceed = null;
         fileUploadModel = new FileUploadModel();
     }
+
+}
 
 }
