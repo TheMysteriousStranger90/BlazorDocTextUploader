@@ -1,52 +1,48 @@
 ﻿@page "/"
 @using BlazorDocTextUploader.Client.Validations
-@using Microsoft.AspNetCore.Http
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components
 @inject HttpClient Http
 @inject IConfiguration Configuration
 
+
 <h1 class="p-1 display-4 mt-6 mb-6">File Upload</h1>
 
-@if (isSucceed.HasValue)
+@if (_isUploading)
 {
-    <h3 role="button" style="color: #9f7aea;" class="@(isSucceed.Value ? "text-success" : "text-danger")" @onclick="onSubmit">
-        @if (isSucceed.Value)
-        {
-            <text>Success! File has been uploaded</text>
-        }
-        else
-        {
-            <text>Failed! File has not been uploaded</text>
-        }
-    </h3>
+    <p>Uploading...</p>
 }
-else
+else if (_uploadComplete)
 {
-    <EditForm Model="fileUploadModel" OnValidSubmit="Upload">
-        <div class="form-row mt-3">
-            <div class="mb-4">
-                <label for="textInput" class="form-label user-select-none mt-3">Email</label>
-                <InputText id="textInput" @bind-Value="fileUploadModel.Email" class="form-control " placeholder="example@gmail.com"/>
-                <ValidationMessage For="@(() => fileUploadModel.Email)"/>
-            </div>
-            <div class="mb-4 mt-3"></div>
-            <div class="form-group mb-4">
-                <label for="fileInput" class="form-label user-select-none mt-3">Document to upload</label>
-                <InputFile id="fileInput" @bind-Value="fileUploadModel.Document" accept=".docx" class="form-control"/>
-                <ValidationMessage For="@(() => fileUploadModel.Document)"/>
-            </div>
-        </div>
-        <button disabled="@isUploading" class="btn btn-lg mt-3" style="background-color: #9f7aea; color: #171717" type="submit">Submit</button>
-        <div hidden="!isUploading" class="spinner-grow" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </EditForm>
+    <p>File has been uploaded successfully!</p>
 }
 
+<EditForm Model="_fileUploadModel" OnValidSubmit="UploadFile" enctype="multipart/form-data">
+    <div class="form-row mt-3">
+        <div class="mb-4">
+            <label for="textInput" class="form-label user-select-none mt-3">Email</label>
+            <InputText id="textInput" @bind-Value="_fileUploadModel.UserEmail" class="form-control " placeholder="example@gmail.com"/>
+            <ValidationMessage For="@(() => _fileUploadModel.UserEmail)"/>
+        </div>
+
+        
+<div class="mb-4">
+    <label for="fileInput" class="form-label user-select-none mt-3">Document to upload</label>
+    <InputFile id="fileInput" accept=".docx" class="form-control" OnChange="OnInputFileChange" />
+    <ValidationMessage For="@(() => _fileUploadModel.UserDocTextFile)" />
+</div>
+
+
+     
+    </div>
+
+    <button type="button" class="btn btn-lg mt-3" style="background-color: #9f7aea; color: #171717" @onclick="UploadFile">Upload</button>
+</EditForm>
+
 <style>
-  
     body {
-        height: 100%; 
-        background-color: #171717; 
+        height: 100%;
+        background-color: #171717;
         font-family: 'Berlin Sans FB';
         max-width: 400px;
         margin: 60px auto;
@@ -54,95 +50,87 @@ else
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         border-radius: 5px;
     }
-    
+
     h1 {
-    color: #9f7aea;
+        color: #9f7aea;
     }
-    
+
     button {
-     color: #3a3a3a;
+        color: #3a3a3a;
     }
-    
+
     .form-label {
-    color: #9f7aea;
+        color: #9f7aea;
     }
-    
 </style>
 
 @code {
+    
+    private FileUploadModel _fileUploadModel = new FileUploadModel();
+    private bool _isUploading;
+    private bool _uploadComplete;
 
-    private class FileUploadModel
+    private async Task UploadFile()
     {
-        public string Email { get; set; }
+        _isUploading = true;
 
-        [FileTypeValidation(".doc", ".docx", ErrorMessage = "File type must be .doc or .docx")]
-        public IFormFile Document { get; set; }
-    }
-
-    private FileUploadModel fileUploadModel = new FileUploadModel();
-    private bool? isSucceed;
-    private bool isUploading = false;
-
-    private async Task Upload()
-    {
-        if (fileUploadModel.Document != null)
+        if (string.IsNullOrWhiteSpace(_fileUploadModel.UserEmail) || _fileUploadModel.UserDocTextFile == null)
         {
-            isUploading = true;
+            _isUploading = false;
+            return;
+        }
 
-            if (string.IsNullOrWhiteSpace(fileUploadModel.Email) || fileUploadModel.Document == null)
+        try
+        {
+            var apiUrl = "https://azurestorage90bh.blob.core.windows.net/projectcontainer";
+            var formData = new MultipartFormDataContent();
+            formData.Add(new StringContent(_fileUploadModel.UserEmail), "Email");
+            formData.Add(new StreamContent(_fileUploadModel.UserDocTextFile.OpenReadStream()), "File", _fileUploadModel.UserDocTextFile.Name);
+
+            using (var client = new HttpClient())
             {
-                isUploading = false;
-                return;
-            }
+                var response = await client.PostAsJsonAsync($"{apiUrl}/Uploader/projectcontainer", formData);
 
-            try
-            {
-                var apiUrl = Configuration["BlobURL"];
-                var formData = new MultipartFormDataContent();
-                formData.Add(new StringContent(fileUploadModel.Email), "Email");
-                formData.Add(new StreamContent(fileUploadModel.Document.OpenReadStream()), "File", fileUploadModel.Document.Name);
-
-                using (var client = new HttpClient())
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = await client.PostAsync($"{apiUrl}/uploader/projectcontainer", formData);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        isSucceed = true;
-                    }
-                    else
-                    {
-                        isSucceed = false;
-                        var errorResponse = await response.Content.ReadAsStringAsync();
-                        Console.WriteLine($"Upload failed with status code: {response.StatusCode}");
-                        Console.WriteLine($"Error response: {errorResponse}");
-                    }
+                    _uploadComplete = true;
+                }
+                else
+                {
+                    _uploadComplete = false;
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Upload failed with status code: {response.StatusCode}");
+                    Console.WriteLine($"Error response: {errorResponse}");
                 }
             }
-            catch (HttpRequestException ex)
-            {
-                isSucceed = false;
-                Console.WriteLine($"HTTP request error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                isSucceed = false;
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-            finally
-            {
-                isUploading = false;
-            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _isUploading = false;
+            Console.WriteLine($"HTTP request error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _isUploading = false;
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+        finally
+        {
+            _isUploading = false;
         }
     }
-
-
-    private void onSubmit()
+    
+    private void OnInputFileChange (InputFileChangeEventArgs e)
     {
-        isSucceed = null;
-        fileUploadModel = new FileUploadModel();
+        _fileUploadModel.UserDocTextFile = e.File;
     }
+    
+    private class FileUploadModel
+    {
+        [EmailAddress]
+        public string UserEmail { get; set; }
 
-}
-
+        [FileTypeValidation(".doc", ".docx", ErrorMessage = "File type must be .doc or .docx")]
+        public  IBrowserFile UserDocTextFile { get; set; }
+    }
 }

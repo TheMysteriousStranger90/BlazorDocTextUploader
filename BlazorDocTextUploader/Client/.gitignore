@@ -269,3 +269,4 @@ __pycache__/
 # tools/
 
 appsettings.json
+appsettings.client.json

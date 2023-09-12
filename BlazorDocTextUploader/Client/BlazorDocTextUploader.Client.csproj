@@ -8,13 +8,20 @@
 
     <ItemGroup>
         <PackageReference Include="Azure.Storage.Blobs" Version="12.17.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Forms" Version="7.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
+        <PackageReference Include="Tewr.Blazor.FileReader" Version="3.3.2.23201" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Shared\BlazorDocTextUploader.Shared.csproj"/>
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <Folder Include="Services\" />
     </ItemGroup>
 
 </Project>
