@@ -1,9 +1,10 @@
+using BlazorDocTextUploader.Shared.Models;
 using Microsoft.AspNetCore.ResponseCompression;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.Configure<AzureOptions>(builder.Configuration.GetSection("Azure"));
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 

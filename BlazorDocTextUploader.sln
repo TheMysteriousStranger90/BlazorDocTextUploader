@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorDocTextUploader.Clien
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorDocTextUploader.Shared", "BlazorDocTextUploader\Shared\BlazorDocTextUploader.Shared.csproj", "{D5B0CA4E-536B-463E-9560-2A9E187B5F5D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorDocTextUploader.UnitTests", "BlazorDocTextUploader.UnitTests\BlazorDocTextUploader.UnitTests.csproj", "{2C333FFF-ABD4-42F6-8D83-54C0C406CF31}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorDocTextUploader.Email.FunctionApp", "BlazorDocTextUploader.Email.FunctionApp\BlazorDocTextUploader.Email.FunctionApp.csproj", "{DDA1692F-AB05-4F4F-B8B5-2342BE81161F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{D5B0CA4E-536B-463E-9560-2A9E187B5F5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5B0CA4E-536B-463E-9560-2A9E187B5F5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5B0CA4E-536B-463E-9560-2A9E187B5F5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C333FFF-ABD4-42F6-8D83-54C0C406CF31}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C333FFF-ABD4-42F6-8D83-54C0C406CF31}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C333FFF-ABD4-42F6-8D83-54C0C406CF31}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C333FFF-ABD4-42F6-8D83-54C0C406CF31}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDA1692F-AB05-4F4F-B8B5-2342BE81161F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDA1692F-AB05-4F4F-B8B5-2342BE81161F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDA1692F-AB05-4F4F-B8B5-2342BE81161F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDA1692F-AB05-4F4F-B8B5-2342BE81161F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

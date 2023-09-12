@@ -7,13 +7,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Storage.Blobs" Version="12.17.0" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="7.0.10"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.10" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Client\BlazorDocTextUploader.Client.csproj"/>
         <ProjectReference Include="..\Shared\BlazorDocTextUploader.Shared.csproj"/>
     </ItemGroup>
+
+
 
 
 </Project>
