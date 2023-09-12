@@ -1,9 +1,136 @@
 ﻿@page "/"
+@using BlazorDocTextUploader.Client.Validations
+@using Microsoft.AspNetCore.Http
+@inject HttpClient Http
+@inject IConfiguration Configuration
 
-<PageTitle>Index</PageTitle>
+<h1 class="p-1 display-4 mt-6 mb-6">File Upload</h1>
 
-<h1>Hello, world!</h1>
+@if (isSucceed.HasValue)
+{
+    <h3 role="button" class="@(isSucceed.Value ? "text-success" : "text-danger")" @onclick="onSubmit">
+        @if (isSucceed.Value)
+        {
+            <text>Success! File has been uploaded</text>
+        }
+        else
+        {
+            <text>Failed! File has not been uploaded</text>
+        }
+    </h3>
+}
+else
+{
+    <EditForm Model="fileUploadModel" OnValidSubmit="Upload">
+        <div class="form-row mt-3">
+            <div class="mb-4">
+                <label class="form-label user-select-none mt-3">Email</label>
+                <InputText @bind-Value="fileUploadModel.Email" class="form-control " placeholder="example@gmail.com"/>
+                <ValidationMessage For="@(() => fileUploadModel.Email)"/>
+            </div>
+            <div class="mb-4 mt-3"></div>
+            <div class="mb-4">
+                <label class="form-label user-select-none mt-3">Document to upload</label>
+                <InputFile @bind-Value="fileUploadModel.Document" accept=".docx" class="form-control"/>
+                <ValidationMessage For="@(() => fileUploadModel.Document)"/>
+            </div>
+        </div>
+        <button disabled="@isUploading" class="btn btn-lg mt-3" style="background-color: #9f7aea; color: #171717" type="submit">Submit</button>
+        <div hidden="!isUploading" class="spinner-grow" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </EditForm>
+}
 
-Welcome to your new app.
+<style>
+  
+    body {
+        height: 100%; 
+        background-color: #171717; 
+        font-family: 'Berlin Sans FB';
+        max-width: 400px;
+        margin: 60px auto;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+    }
+    
+    h1 {
+    color: #9f7aea;
+    }
+    
+    button {
+     color: #3a3a3a;
+    }
+    
+    .form-label {
+    color: #9f7aea;
+    }
+    
+</style>
 
-<SurveyPrompt Title="How is Blazor working for you?"/>
+@code {
+
+    private class FileUploadModel
+    {
+        public string Email { get; set; }
+        [FileTypeValidation(".doc", ".docx", ErrorMessage = "File type must be .doc or .docx")]
+        public IFormFile Document { get; set; }
+    }
+
+    private FileUploadModel fileUploadModel = new FileUploadModel();
+    private bool? isSucceed;
+    private bool isUploading = false;
+
+    private async Task Upload()
+    {
+        if (fileUploadModel.Document != null)
+        {
+            isUploading = true;
+            
+            if (string.IsNullOrWhiteSpace(fileUploadModel.Email) || fileUploadModel.Document == null)
+            {
+                isUploading = false;
+                return;
+            }
+
+
+            try
+            {
+                var apiUrl = Configuration["BlobURL"];
+                var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(fileUploadModel.Email), "Email");
+                formData.Add(new StreamContent(fileUploadModel.Document.OpenReadStream()), "File", fileUploadModel.Document.Name);
+
+                using (var client = new HttpClient())
+                {
+                    var response = await client.PostAsync($"{apiUrl}/uploader/projectcontainer", formData);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        isSucceed = true;
+                    }
+                    else
+                    {
+                        isSucceed = false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                isSucceed = false;
+            }
+            finally
+            {
+                isUploading = false;
+            }
+        }
+    }
+
+    private void onSubmit()
+    {
+        isSucceed = null;
+        fileUploadModel = new FileUploadModel();
+    }
+
+}
