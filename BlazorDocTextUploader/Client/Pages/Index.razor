@@ -2,6 +2,7 @@
 @using BlazorDocTextUploader.Client.Validations
 @using System.ComponentModel.DataAnnotations
 @using System.Net.Http.Headers
+@using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.Components
 @inject HttpClient Http
 @inject IConfiguration Configuration
@@ -12,18 +13,18 @@
 
 @if (_isUploading)
 {
-    <p>Uploading...</p>
+    <p style="color: #9f7aea;" >Uploading...</p>
 }
 else if (_uploadComplete)
 {
-    <p>File has been uploaded successfully!</p>
+    <p style="color: #9f7aea;" >File has been uploaded successfully!</p>
 }
 
 <EditForm Model="_fileUploadModel" OnValidSubmit="UploadFile" enctype="multipart/form-data">
     <div class="form-row mt-3">
         <div class="mb-4">
-            <label for="textInput" class="form-label user-select-none mt-3">Email</label>
-            <InputText id="textInput" @bind-Value="_fileUploadModel.UserEmail" class="form-control " placeholder="example@gmail.com"/>
+            <label  for="email" class="form-label user-select-none mt-3">Email</label>
+            <InputText type="email" id="email" @bind-Value="_fileUploadModel.UserEmail" class="form-control " placeholder="example@gmail.com"/>
             <ValidationMessage For="@(() => _fileUploadModel.UserEmail)"/>
         </div>
         
@@ -63,16 +64,17 @@ else if (_uploadComplete)
 
 @code {
     
-    private const string _baseUrl = "https://localhost:5001/";
+    private const string _baseUrl = "https://webapp-230913220406.azurewebsites.net/";
     private FileUploadModel _fileUploadModel = new FileUploadModel();
     private bool _isUploading;
     private bool _uploadComplete;
+    string emailPattern = @"^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$";
     
     private async Task UploadFile()
     {
         _isUploading = true;
 
-        if (_fileUploadModel.UserDocTextFile == null || string.IsNullOrWhiteSpace(_fileUploadModel.UserEmail) )
+        if (_fileUploadModel.UserDocTextFile == null || string.IsNullOrWhiteSpace(_fileUploadModel.UserEmail) || !Regex.IsMatch(_fileUploadModel.UserEmail, emailPattern))
         {
             _isUploading = false;
             return;
