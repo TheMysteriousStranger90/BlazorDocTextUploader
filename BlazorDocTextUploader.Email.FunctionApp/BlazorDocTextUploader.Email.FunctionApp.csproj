@@ -8,6 +8,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Azure.Storage.Blobs" Version="12.17.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Components" Version="7.0.10" />
         <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.18.0"/>
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Storage.Blobs" Version="4.0.4" />

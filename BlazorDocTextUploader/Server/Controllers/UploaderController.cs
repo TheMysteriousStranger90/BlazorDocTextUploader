@@ -12,14 +12,14 @@ public class UploaderController : BaseApiController
     {
         _uploaderService = uploaderService;
     }
-    
+
     [HttpPost("projectcontainer")]
     public async Task<IActionResult> Upload([FromForm] DocTextUploaderModel model)
     {
         try
         {
             await _uploaderService.UploadFileAsync(model);
-        
+
             return Ok(new { message = "Has been uploaded!" });
         }
         catch (Exception e)

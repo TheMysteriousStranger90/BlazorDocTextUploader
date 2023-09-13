@@ -1,9 +1,11 @@
 ﻿@page "/"
 @using BlazorDocTextUploader.Client.Validations
 @using System.ComponentModel.DataAnnotations
+@using System.Net.Http.Headers
 @using Microsoft.AspNetCore.Components
 @inject HttpClient Http
 @inject IConfiguration Configuration
+@inject ILogger<HttpClient> Logger 
 
 
 <h1 class="p-1 display-4 mt-6 mb-6">File Upload</h1>
@@ -24,18 +26,13 @@ else if (_uploadComplete)
             <InputText id="textInput" @bind-Value="_fileUploadModel.UserEmail" class="form-control " placeholder="example@gmail.com"/>
             <ValidationMessage For="@(() => _fileUploadModel.UserEmail)"/>
         </div>
-
         
-<div class="mb-4">
-    <label for="fileInput" class="form-label user-select-none mt-3">Document to upload</label>
-    <InputFile id="fileInput" accept=".docx" class="form-control" OnChange="OnInputFileChange" />
-    <ValidationMessage For="@(() => _fileUploadModel.UserDocTextFile)" />
-</div>
-
-
-     
-    </div>
-
+        <div class="mb-4">
+            <label for="fileInput" class="form-label user-select-none mt-3">Document to upload</label>
+            <InputFile id="fileInput" accept=".doc, .docx" class="form-control" OnChange="OnInputFileChange" />
+            <ValidationMessage For="@(() => _fileUploadModel.UserDocTextFile)" />
+        </div>
+        </div>
     <button type="button" class="btn btn-lg mt-3" style="background-color: #9f7aea; color: #171717" @onclick="UploadFile">Upload</button>
 </EditForm>
 
@@ -66,15 +63,16 @@ else if (_uploadComplete)
 
 @code {
     
+    private const string _baseUrl = "https://localhost:5001/";
     private FileUploadModel _fileUploadModel = new FileUploadModel();
     private bool _isUploading;
     private bool _uploadComplete;
-
+    
     private async Task UploadFile()
     {
         _isUploading = true;
 
-        if (string.IsNullOrWhiteSpace(_fileUploadModel.UserEmail) || _fileUploadModel.UserDocTextFile == null)
+        if (_fileUploadModel.UserDocTextFile == null || string.IsNullOrWhiteSpace(_fileUploadModel.UserEmail) )
         {
             _isUploading = false;
             return;
@@ -82,14 +80,13 @@ else if (_uploadComplete)
 
         try
         {
-            var apiUrl = "https://azurestorage90bh.blob.core.windows.net/projectcontainer";
             var formData = new MultipartFormDataContent();
-            formData.Add(new StringContent(_fileUploadModel.UserEmail), "Email");
-            formData.Add(new StreamContent(_fileUploadModel.UserDocTextFile.OpenReadStream()), "File", _fileUploadModel.UserDocTextFile.Name);
+            formData.Add(new StringContent(_fileUploadModel.UserEmail), "UserEmail");
+            formData.Add(new StreamContent(_fileUploadModel.UserDocTextFile.OpenReadStream()), "UserDocTextFile", _fileUploadModel.UserDocTextFile.Name);
 
             using (var client = new HttpClient())
             {
-                var response = await client.PostAsJsonAsync($"{apiUrl}/Uploader/projectcontainer", formData);
+                var response = await client.PostAsync($"{_baseUrl}uploader/projectcontainer", formData);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -101,6 +98,9 @@ else if (_uploadComplete)
                     var errorResponse = await response.Content.ReadAsStringAsync();
                     Console.WriteLine($"Upload failed with status code: {response.StatusCode}");
                     Console.WriteLine($"Error response: {errorResponse}");
+                    
+                    Logger.LogError($"Upload failed with status code: {response.StatusCode}");
+                    Logger.LogError($"Error response: {errorResponse}");
                 }
             }
         }

@@ -1,23 +1,30 @@
+using Azure.Storage.Blobs;
+using BlazorDocTextUploader.Server.Extensions;
 using BlazorDocTextUploader.Shared.Models;
-using Microsoft.AspNetCore.ResponseCompression;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.Configure<AzureOptions>(builder.Configuration.GetSection("Azure"));
-
-
+builder.Services.AddApplicationServices(builder.Configuration);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddCors();
-var app = builder.Build();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowedCorsOrigins",
+        build =>
+        {
+            build
+                .SetIsOriginAllowed((_) => true)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
 
-app.UseCors(builder => builder.AllowAnyOrigin()
-    .AllowAnyHeader()
-    .AllowAnyMethod());
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -31,7 +38,11 @@ else
     app.UseHsts();
 }
 
+app.UseCors("AllowedCorsOrigins");
+
 app.UseHttpsRedirection();
+
+app.UseAuthorization();
 
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();

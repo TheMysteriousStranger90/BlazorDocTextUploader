@@ -10,24 +10,28 @@ namespace BlazorDocTextUploader.Server.Services;
 
 public class UploaderService : IUploaderService
 {
-    private readonly IConfiguration _configuration;
-    private string blobStorageConnection = string.Empty;
-    private string blobContainerName = string.Empty;
-    private readonly BlobServiceClient _blobServiceClient;
     private readonly AzureOptions _azureOptions;
 
-    public UploaderService(IConfiguration configuration, BlobServiceClient blobServiceClient, IOptions<AzureOptions> azureOptions)
+    public UploaderService(IOptions<AzureOptions> azureOptions)
     {
-        _blobServiceClient = blobServiceClient;
-
         _azureOptions = azureOptions.Value;
-
-        blobStorageConnection = _configuration.GetConnectionString("Azure:ConnectionString");
-        blobContainerName = _configuration.GetConnectionString("Azure:Container");
     }
 
     public async Task UploadFileAsync(DocTextUploaderModel model)
     {
+        if (model == null)
+            throw new ArgumentNullException(nameof(model));
+
+        if (string.IsNullOrWhiteSpace(model.UserEmail) || model.UserDocTextFile == null)
+        {
+            throw new ArgumentException("UserEmail and UserDocTextFile are required.");
+        }
+
+        if (!IsDoc(model.UserDocTextFile))
+        {
+            throw new ArgumentException("Invalid file type. Only .doc and .docx files are allowed.");
+        }
+
         if (IsDoc(model.UserDocTextFile))
         {
             await UploadDocxAsync(model);
@@ -57,7 +61,7 @@ public class UploaderService : IUploaderService
         await blobClient.UploadAsync(readUploadFile, overwrite: false);
     }
 
-    public static bool IsDoc(IFormFile file)
+    private bool IsDoc(IFormFile file)
     {
         if (file.ContentType.Contains("application/msword") ||
             file.ContentType.Contains("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
@@ -66,7 +70,7 @@ public class UploaderService : IUploaderService
         }
 
         string[] allowedExtensions = { ".doc", ".docx" };
-        string fileExtension = System.IO.Path.GetExtension(file.FileName);
+        string fileExtension = Path.GetExtension(file.FileName);
 
         return allowedExtensions.Contains(fileExtension, StringComparer.OrdinalIgnoreCase);
     }

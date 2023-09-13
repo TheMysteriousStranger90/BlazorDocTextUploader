@@ -5,8 +5,10 @@ using Azure.Storage.Sas;
 using BlazorDocTextUploader.Email.FunctionApp.Interfaces;
 using BlazorDocTextUploader.Email.FunctionApp.Models;
 using BlazorDocTextUploader.Email.FunctionApp.Models.Enums;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BlazorDocTextUploader.Email.FunctionApp;
 
@@ -16,32 +18,27 @@ public class BlobTriggerFunction
 
     public BlobTriggerFunction(IEmailService emailService)
     {
-        _emailService = emailService;
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
     }
 
     [Function("BlobTriggerFunction")]
     public async Task Run(
-        [BlobTrigger("projectcontainer/{name}", Connection = "AzureWebJobsStorage")]
-        Stream blobStream,
+        [BlobTrigger("projectcontainer/{name}", Connection = "AzureWebJobsStorage")] Stream blobStream,
         string name,
-        ILogger log,
         FunctionContext context)
     {
-        var logger = context.GetLogger("BlobTriggerCSharp");
-        logger.LogInformation($"C# Blob trigger function Processed blob\n Name: {name}");
-
-
+        var log = context.GetLogger<BlobTriggerFunction>();
+        
         try
         {
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
             var containerClient = blobServiceClient.GetBlobContainerClient("projectcontainer");
-
             var blobClient = containerClient.GetBlobClient(name);
-            var recievedFilenamePieces = name.Split("__");
-
-            string userEmail = recievedFilenamePieces[(int)FilenamePieces.UserEmail];
-            string docxName = recievedFilenamePieces[(int)FilenamePieces.UserDocTextFile];
-
+            
+            var receivedFilenamePieces = name.Split("__");
+            string userEmail = receivedFilenamePieces[(int)FilenamePieces.UserEmail];
+            string docxName = receivedFilenamePieces[(int)FilenamePieces.UserDocTextFile];
+            
             var sasBuilder = new BlobSasBuilder
             {
                 BlobContainerName = containerClient.Name,
@@ -52,13 +49,12 @@ public class BlobTriggerFunction
             sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
             var sasToken = blobClient.GenerateSasUri(sasBuilder).ToString();
-
+            
             var emailModel = new EmailModel
             {
                 To = userEmail,
                 Subject = "File Successfully Uploaded",
-                Body =
-                    $"<p>Dear <strong>{userEmail}</strong> , Your file '{docxName}' has been successfully uploaded. You can access it <a href='{sasToken}'>here</a>.</p>"
+                Body = $"<p>Dear <strong>{userEmail}</strong>, Your file '{docxName}' has been successfully uploaded. You can access it <a href='{sasToken}'>here</a>.</p>"
             };
 
             await _emailService.SendEmailAsync(emailModel);

@@ -10,10 +10,10 @@ public static class ApplicationServiceExtensions
         IConfiguration config)
     {
         string connectionString = config.GetConnectionString("Azure:ConnectionString");
-        
+
         services.AddSingleton(x => new BlobServiceClient(connectionString));
         services.AddScoped<IUploaderService, UploaderService>();
-        
+
         return services;
     }
 }
